@@ -29,7 +29,9 @@ void debugEyesSerial() {
   if (Serial.available() > 0) {
     char cmd = Serial.read();
 
-    if (cmd == '\r' || cmd == '\n' || cmd == ' ') return;
+    if (cmd == '\r' || cmd == '\n' || cmd == ' ') {
+      return;
+    }
 
     modoAutonomo = false;
 
@@ -152,11 +154,14 @@ void ejecutarSecuenciaAutonoma() {
 
 void setup() {
   Serial.begin(115200);
+
   while (!Serial && millis() < 1000);
 
   if (!initDiagnostics(display)) {
     Serial.println(F("[FALLO CRÍTICO] Error al inicializar pantalla OLED."));
-    while (true) delay(100);
+    while (true) {
+      delay(100);
+    }
   }
 
   runSystemPOST(display);

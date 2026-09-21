@@ -2,9 +2,12 @@
 #include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
+#include <Irisoled.h>
+#include <IrisoledAnimation.h>
 
 #include "logboot.h"
 #include "eyes.h"
+#include "logo.h"
 
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
@@ -20,92 +23,215 @@ enum EyeState {
 };
 
 EyeState currentState = STATE_NORMAL;
+
 bool modoAutonomo = true;
+bool animacionActiva = false;
+
 unsigned long previousMillis = 0;
-const unsigned long INTERVALO_ANIMACION = 2500;
 int pasoSecuencia = 0;
 
+const unsigned long INTERVALO_ANIMACION = 1800;
+
+const unsigned char* scanFrames[] = {
+  Irisoled::normal,
+  Irisoled::look_left,
+  Irisoled::normal,
+  Irisoled::look_right,
+  Irisoled::normal,
+  Irisoled::look_up,
+  Irisoled::normal,
+  Irisoled::look_down,
+  Irisoled::normal
+};
+
+const uint16_t scanDelays[] = {
+  300,
+  280,
+  220,
+  280,
+  220,
+  280,
+  220,
+  280,
+  400
+};
+
+IrisoledAnimation scanAnimation(
+  scanFrames,
+  sizeof(scanFrames) / sizeof(scanFrames[0]),
+  scanDelays,
+  250,
+  true
+);
+
+const unsigned char* blinkFrames[] = {
+  Irisoled::normal,
+  Irisoled::blink_up,
+  Irisoled::blink,
+  Irisoled::blink_down,
+  Irisoled::blink,
+  Irisoled::blink_up,
+  Irisoled::normal
+};
+
+const uint16_t blinkDelays[] = {
+  100,
+  45,
+  45,
+  55,
+  45,
+  45,
+  100
+};
+
+IrisoledAnimation blinkAnimation(
+  blinkFrames,
+  sizeof(blinkFrames) / sizeof(blinkFrames[0]),
+  blinkDelays,
+  60,
+  false
+);
+
+void detenerAnimaciones() {
+  animacionActiva = false;
+  scanAnimation.stop();
+  blinkAnimation.stop();
+}
+
+void mostrarExpresion(EyeState estado) {
+  detenerAnimaciones();
+
+  currentState = estado;
+
+  switch (estado) {
+    case STATE_NORMAL:
+      drawEyeExpression(display, eye_normal);
+      break;
+
+    case STATE_HAPPY:
+      drawEyeExpression(display, eye_happy);
+      break;
+
+    case STATE_ALERT:
+      drawEyeExpression(display, eye_alert);
+      break;
+
+    case STATE_SLEEPY:
+      drawEyeExpression(display, eye_sleepy);
+      break;
+
+    case STATE_BLINK:
+      drawEyeExpression(display, eye_blink);
+      break;
+
+    case STATE_LOOK_LEFT:
+      drawEyeExpression(display, eye_look_left);
+      break;
+
+    case STATE_LOOK_RIGHT:
+      drawEyeExpression(display, eye_look_right);
+      break;
+
+    case STATE_EXCITED:
+      drawEyeExpression(display, eye_excited);
+      break;
+  }
+}
+
+void iniciarScanning() {
+  scanAnimation.reset();
+  scanAnimation.start();
+  animacionActiva = true;
+}
+
+void iniciarParpadeo() {
+  blinkAnimation.reset();
+  blinkAnimation.start();
+  animacionActiva = true;
+}
+
 void debugEyesSerial() {
-  if (Serial.available() > 0) {
+  while (Serial.available() > 0) {
     char cmd = Serial.read();
 
     if (cmd == '\r' || cmd == '\n' || cmd == ' ') {
-      return;
+      continue;
     }
 
     modoAutonomo = false;
+    detenerAnimaciones();
 
     switch (cmd) {
       case '1':
       case 'N':
       case 'n':
-        currentState = STATE_NORMAL;
-        drawEyeExpression(display, eye_normal);
-        Serial.println(F("[SERIAL DEBUG] Expresión cambiada a: NORMAL"));
+        mostrarExpresion(STATE_NORMAL);
+        Serial.println(F("[SERIAL DEBUG] Expresion: NORMAL"));
         break;
 
       case '2':
       case 'H':
       case 'h':
-        currentState = STATE_HAPPY;
-        drawEyeExpression(display, eye_happy);
-        Serial.println(F("[SERIAL DEBUG] Expresión cambiada a: FELIZ"));
+        mostrarExpresion(STATE_HAPPY);
+        Serial.println(F("[SERIAL DEBUG] Expresion: FELIZ"));
         break;
 
       case '3':
       case 'A':
       case 'a':
-        currentState = STATE_ALERT;
-        drawEyeExpression(display, eye_alert);
-        Serial.println(F("[SERIAL DEBUG] Expresión cambiada a: ALERTA"));
+        mostrarExpresion(STATE_ALERT);
+        Serial.println(F("[SERIAL DEBUG] Expresion: ALERTA"));
         break;
 
       case '4':
       case 'S':
       case 's':
-        currentState = STATE_SLEEPY;
-        drawEyeExpression(display, eye_sleepy);
-        Serial.println(F("[SERIAL DEBUG] Expresión cambiada a: REPOSO (Sleepy)"));
+        mostrarExpresion(STATE_SLEEPY);
+        Serial.println(F("[SERIAL DEBUG] Expresion: REPOSO"));
         break;
 
       case '5':
       case 'B':
       case 'b':
-        currentState = STATE_BLINK;
-        drawEyeExpression(display, eye_blink);
-        Serial.println(F("[SERIAL DEBUG] Expresión cambiada a: PARPADEO (Blink)"));
+        iniciarParpadeo();
+        Serial.println(F("[SERIAL DEBUG] Animacion: PARPADEO"));
         break;
 
       case '6':
       case 'L':
       case 'l':
-        currentState = STATE_LOOK_LEFT;
-        drawEyeExpression(display, eye_look_left);
-        Serial.println(F("[SERIAL DEBUG] Expresión cambiada a: MIRADA IZQUIERDA"));
+        mostrarExpresion(STATE_LOOK_LEFT);
+        Serial.println(F("[SERIAL DEBUG] Expresion: IZQUIERDA"));
         break;
 
       case '7':
       case 'R':
       case 'r':
-        currentState = STATE_LOOK_RIGHT;
-        drawEyeExpression(display, eye_look_right);
-        Serial.println(F("[SERIAL DEBUG] Expresión cambiada a: MIRADA DERECHA"));
+        mostrarExpresion(STATE_LOOK_RIGHT);
+        Serial.println(F("[SERIAL DEBUG] Expresion: DERECHA"));
         break;
 
       case '8':
       case 'E':
       case 'e':
-        currentState = STATE_EXCITED;
-        drawEyeExpression(display, eye_excited);
-        Serial.println(F("[SERIAL DEBUG] Expresión cambiada a: EMOCIONADO (Excited)"));
+        mostrarExpresion(STATE_EXCITED);
+        Serial.println(F("[SERIAL DEBUG] Expresion: EMOCIONADO"));
+        break;
+
+      case '9':
+        iniciarScanning();
+        Serial.println(F("[SERIAL DEBUG] Animacion: SCANNING"));
         break;
 
       case '0':
       case 'M':
       case 'm':
         modoAutonomo = true;
+        detenerAnimaciones();
+        pasoSecuencia = 0;
+        mostrarExpresion(STATE_NORMAL);
         previousMillis = millis();
-        Serial.println(F("[SERIAL DEBUG] Modo Autónomo reactivado (Animación FSM activa)"));
+        Serial.println(F("[SERIAL DEBUG] Modo AUTONOMO activado"));
         break;
 
       default:
@@ -117,39 +243,69 @@ void debugEyesSerial() {
 }
 
 void ejecutarSecuenciaAutonoma() {
-  pasoSecuencia = (pasoSecuencia + 1) % 6;
+  detenerAnimaciones();
 
   switch (pasoSecuencia) {
     case 0:
-      currentState = STATE_NORMAL;
-      drawEyeExpression(display, eye_normal);
+      mostrarExpresion(STATE_NORMAL);
       break;
 
     case 1:
-      currentState = STATE_BLINK;
-      drawEyeExpression(display, eye_blink);
+      iniciarParpadeo();
       break;
 
     case 2:
-      currentState = STATE_LOOK_LEFT;
-      drawEyeExpression(display, eye_look_left);
+      iniciarScanning();
       break;
 
     case 3:
-      currentState = STATE_NORMAL;
-      drawEyeExpression(display, eye_normal);
+      mostrarExpresion(STATE_HAPPY);
       break;
 
     case 4:
-      currentState = STATE_LOOK_RIGHT;
-      drawEyeExpression(display, eye_look_right);
+      mostrarExpresion(STATE_NORMAL);
       break;
 
     case 5:
-      currentState = STATE_HAPPY;
-      drawEyeExpression(display, eye_happy);
+      mostrarExpresion(STATE_ALERT);
+      break;
+
+    case 6:
+      mostrarExpresion(STATE_NORMAL);
+      break;
+
+    case 7:
+      mostrarExpresion(STATE_SLEEPY);
+      break;
+
+    case 8:
+      mostrarExpresion(STATE_NORMAL);
+      break;
+
+    case 9:
+      drawEyeExpression(display, eye_wink_left);
+      break;
+
+    case 10:
+      drawEyeExpression(display, eye_wink_right);
+      break;
+
+    case 11:
+      mostrarExpresion(STATE_EXCITED);
+      break;
+
+    case 12:
+      mostrarExpresion(STATE_NORMAL);
       break;
   }
+
+  pasoSecuencia++;
+
+  if (pasoSecuencia > 12) {
+    pasoSecuencia = 0;
+  }
+
+  previousMillis = millis();
 }
 
 void setup() {
@@ -158,30 +314,36 @@ void setup() {
   while (!Serial && millis() < 1000);
 
   if (!initDiagnostics(display)) {
-    Serial.println(F("[FALLO CRÍTICO] Error al inicializar pantalla OLED."));
+    Serial.println(F("[FALLO CRITICO] Error al inicializar pantalla OLED."));
+
     while (true) {
       delay(100);
     }
   }
 
+  mostrarLogo(display);
+  delay(1800);
+
   runSystemPOST(display);
 
-  Serial.println(F("\n======================================================="));
-  Serial.println(F("🤖 SISTEMA EMBEBIDO ESP32 — TELEMETRÍA Y CONTROL DE OJOS"));
+  Serial.println(F(""));
   Serial.println(F("======================================================="));
-  Serial.println(F("Comandos Serial interactivos (Debug / Control de IA):"));
-  Serial.println(F("  '1' o 'N' -> Ojos Normales (Neutro)"));
-  Serial.println(F("  '2' o 'H' -> Ojos Felices (Empatía)"));
-  Serial.println(F("  '3' o 'A' -> Ojos Alerta (Atención/Peligro)"));
-  Serial.println(F("  '4' o 'S' -> Ojos Reposo (Sleepy)"));
-  Serial.println(F("  '5' o 'B' -> Parpadeo (Blink)"));
-  Serial.println(F("  '6' o 'L' -> Mirar Izquierda"));
-  Serial.println(F("  '7' o 'R' -> Mirar Derecha"));
-  Serial.println(F("  '8' o 'E' -> Ojos Emocionados (Excited)"));
-  Serial.println(F("  '0' o 'M' -> Alternar Modo Autónomo (FSM millis)"));
-  Serial.println(F("=======================================================\n"));
+  Serial.println(F("SISTEMA EMBEBIDO ESP32 - TELEMETRIA Y CONTROL DE OJOS"));
+  Serial.println(F("======================================================="));
+  Serial.println(F("1/N NORMAL"));
+  Serial.println(F("2/H FELIZ"));
+  Serial.println(F("3/A ALERTA"));
+  Serial.println(F("4/S REPOSO"));
+  Serial.println(F("5/B PARPADEO"));
+  Serial.println(F("6/L IZQUIERDA"));
+  Serial.println(F("7/R DERECHA"));
+  Serial.println(F("8/E EMOCIONADO"));
+  Serial.println(F("9 SCANNING"));
+  Serial.println(F("0/M AUTONOMO"));
+  Serial.println(F("======================================================="));
+  Serial.println(F(""));
 
-  drawEyeExpression(display, eye_normal);
+  mostrarExpresion(STATE_NORMAL);
 
   previousMillis = millis();
 }
@@ -189,11 +351,34 @@ void setup() {
 void loop() {
   debugEyesSerial();
 
-  if (modoAutonomo) {
+  if (animacionActiva) {
+    if (scanAnimation.isRunning()) {
+      scanAnimation.update(
+        display,
+        0,
+        0,
+        SCREEN_WIDTH,
+        SCREEN_HEIGHT
+      );
+    } else if (blinkAnimation.isRunning()) {
+      blinkAnimation.update(
+        display,
+        0,
+        0,
+        SCREEN_WIDTH,
+        SCREEN_HEIGHT
+      );
+    } else {
+      animacionActiva = false;
+      mostrarExpresion(STATE_NORMAL);
+      previousMillis = millis();
+    }
+  }
+
+  if (modoAutonomo && !animacionActiva) {
     unsigned long currentMillis = millis();
 
     if (currentMillis - previousMillis >= INTERVALO_ANIMACION) {
-      previousMillis = currentMillis;
       ejecutarSecuenciaAutonoma();
     }
   }

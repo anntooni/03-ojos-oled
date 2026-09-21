@@ -77,6 +77,9 @@ void debugEyesSerial() {
       case '6':
       case 'L':
       case 'l':
+        currentState = STATE_LOOK_LEFT;
+        drawEyeExpression(display, eye_look_left);
+        Serial.println(F("[SERIAL DEBUG] Expresión cambiada a: MIRADA IZQUIERDA"));
         break;
 
       case '7':
@@ -121,9 +124,13 @@ void ejecutarSecuenciaAutonoma() {
       break;
 
     case 1:
+      currentState = STATE_BLINK;
+      drawEyeExpression(display, eye_blink);
       break;
 
     case 2:
+      currentState = STATE_LOOK_LEFT;
+      drawEyeExpression(display, eye_look_left);
       break;
 
     case 3:

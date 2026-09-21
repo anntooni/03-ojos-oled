@@ -1,16 +1,3 @@
-/**
- * ============================================================================
- * EYES.H — CATÁLOGO DE EXPRESIONES OCULARES OLED (128x64)
- * Soporte Técnico (3° BGU Técnico) — Unidad Educativa Técnico Salesiano
- * ============================================================================
- * Wrapper modular de la librería oficial Irisoled para ESP32 y SSD1306.
- * 
- * En lugar de copiar cientos de líneas de bitmaps en bruto dentro del proyecto,
- * la librería se descarga e integra automáticamente vía 'platformio.ini' (lib_deps),
- * almacenando 32 expresiones optimizadas en memoria Flash (PROGMEM).
- * ============================================================================
- */
-
 #ifndef EYES_H
 #define EYES_H
 
@@ -20,7 +7,6 @@
 #include <Irisoled.h>
 #include <IrisoledAnimation.h>
 
-// Dimensiones estándar del display OLED
 #ifndef SCREEN_WIDTH
 #define SCREEN_WIDTH 128
 #endif
@@ -29,30 +15,42 @@
 #define SCREEN_HEIGHT 64
 #endif
 
-// ============================================================================
-// ALIAS AMIGABLES A LAS MATRICES EN PROGMEM DE IRISOLED
-// ============================================================================
-#define eye_normal     Irisoled::normal
-#define eye_happy      Irisoled::happy
-#define eye_alert      Irisoled::alert
-#define eye_sleepy     Irisoled::sleepy
-#define eye_blink      Irisoled::blink
-#define eye_blink_down Irisoled::blink_down
-#define eye_look_left  Irisoled::look_left
-#define eye_look_right Irisoled::look_right
-#define eye_excited    Irisoled::excited
+#define eye_normal      Irisoled::normal
+#define eye_happy       Irisoled::happy
+#define eye_alert       Irisoled::alert
+#define eye_sleepy      Irisoled::sleepy
+#define eye_blink       Irisoled::blink
+#define eye_blink_down  Irisoled::blink_down
+#define eye_blink_up    Irisoled::blink_up
+#define eye_look_left   Irisoled::look_left
+#define eye_look_right  Irisoled::look_right
+#define eye_look_up     Irisoled::look_up
+#define eye_look_down   Irisoled::look_down
+#define eye_excited     Irisoled::excited
+#define eye_angry       Irisoled::angry
+#define eye_bored       Irisoled::bored
+#define eye_sad         Irisoled::sad
+#define eye_surprised   Irisoled::surprised
+#define eye_worried     Irisoled::worried
+#define eye_scared      Irisoled::scared
+#define eye_focused     Irisoled::focused
+#define eye_wink_left   Irisoled::wink_left
+#define eye_wink_right  Irisoled::wink_right
 
-/**
- * Renderiza de forma inmediata un bitmap de expresión en la pantalla OLED.
- * Limpia el buffer previo, dibuja el bitmap monocromático y vuelca el buffer.
- *
- * @param display Referencia a la instancia de Adafruit_SSD1306.
- * @param eyeBitmap Puntero a la matriz del bitmap almacenada en PROGMEM.
- */
-inline void drawEyeExpression(Adafruit_SSD1306 &display, const unsigned char* eyeBitmap) {
+inline void drawEyeExpression(
+  Adafruit_SSD1306 &display,
+  const unsigned char* eyeBitmap
+) {
   display.clearDisplay();
-  display.drawBitmap(0, 0, eyeBitmap, SCREEN_WIDTH, SCREEN_HEIGHT, SSD1306_WHITE);
+  display.drawBitmap(
+    0,
+    0,
+    eyeBitmap,
+    SCREEN_WIDTH,
+    SCREEN_HEIGHT,
+    SSD1306_WHITE
+  );
   display.display();
 }
 
-#endif // EYES_H
+#endif

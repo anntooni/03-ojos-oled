@@ -28,6 +28,7 @@ int pasoSecuencia = 0;
 void debugEyesSerial() {
   if (Serial.available() > 0) {
     char cmd = Serial.read();
+
     if (cmd == '\r' || cmd == '\n' || cmd == ' ') return;
 
     modoAutonomo = false;
@@ -44,13 +45,17 @@ void debugEyesSerial() {
       case '2':
       case 'H':
       case 'h':
-        // TODO 4.2
+        currentState = STATE_HAPPY;
+        drawEyeExpression(display, eye_happy);
+        Serial.println(F("[SERIAL DEBUG] Expresión cambiada a: FELIZ"));
         break;
 
       case '3':
       case 'A':
       case 'a':
-        // TODO 4.3
+        currentState = STATE_ALERT;
+        drawEyeExpression(display, eye_alert);
+        Serial.println(F("[SERIAL DEBUG] Expresión cambiada a: ALERTA"));
         break;
 
       case '4':
@@ -72,7 +77,6 @@ void debugEyesSerial() {
       case '6':
       case 'L':
       case 'l':
-        // TODO 4.4
         break;
 
       case '7':
@@ -117,11 +121,9 @@ void ejecutarSecuenciaAutonoma() {
       break;
 
     case 1:
-      // TODO 3.1
       break;
 
     case 2:
-      // TODO 3.2
       break;
 
     case 3:
@@ -135,7 +137,8 @@ void ejecutarSecuenciaAutonoma() {
       break;
 
     case 5:
-      // TODO 2.1
+      currentState = STATE_HAPPY;
+      drawEyeExpression(display, eye_happy);
       break;
   }
 }
